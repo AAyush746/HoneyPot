@@ -27,3 +27,5 @@ firebase.json
 
 # VSCode settings (optional)
 .vscode/
+
+backend/geoip/GeoLite2-City.mmdb
