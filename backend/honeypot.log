@@ -1,0 +1,10 @@
+2025-11-21 16:55:20,384 [INFO] Low-interaction SSH Honeypot starting on port 2222...
+2025-11-21 17:13:02,299 [INFO] Low-interaction SSH Honeypot starting on port 2222...
+2025-11-21 17:18:52,568 [INFO] HONEYPOT STARTED → Listening on port 2222 (SSH fake)
+2025-11-21 17:22:03,396 [INFO] HONEYPOT STARTED → Listening on port 2222 (SSH fake)
+2025-11-21 17:24:10,295 [INFO] HONEYPOT STARTED → Listening on port 2222 (SSH fake)
+2025-11-21 17:25:47,745 [INFO] HONEYPOT STARTED → Listening on port 2222 (SSH fake)
+2025-11-21 17:34:25,389 [INFO] HONEYPOT STARTED → Listening on port 2222 (SSH fake)
+2025-11-21 20:20:32,336 [INFO] HONEYPOT STARTED → Listening on port 2222 (SSH fake)
+2025-11-21 20:25:16,068 [INFO] New connection from 127.0.0.1:49904
+2025-11-21 20:25:16,071 [INFO] RAW: SSH-2.0-OpenSSH_10.0p2 Debian-8
