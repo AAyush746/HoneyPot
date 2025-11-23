@@ -74,19 +74,35 @@ function App() {
           <div className="h-96 rounded-xl overflow-hidden border border-gray-700">
             <ComposableMap projectionConfig={{ scale: 140 }}>
               <Geographies geography={geoUrl}>
-                {({ geographies }) => geographies.map(geo => (
+                {({ geographies }: { geographies: any[] }) => geographies.map((geo: any) => (
                   <Geography key={geo.rsmKey} geography={geo} fill="#1a1a2e" stroke="#16213e" />
                 ))}
               </Geographies>
               {attacks
                 .filter(a => a.latitude && a.longitude && a.country_code !== "XX")
                 .map((a, i) => (
-                  <Marker key={i} coordinates={[a.longitude, a.latitude]}>
-                    <circle cx={0} cy={0} r={7} fill="#ef4444" opacity={0.9} stroke="#991b1b" strokeWidth={2}>
-                      <animate attributeName="r" values="5;10;5" dur="2s" repeatCount="indefinite" />
-                      <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
-                    </circle>
-                  </Marker>
+                <Marker key={`${a.id}-${i}`} coordinates={[a.longitude, a.latitude]}>
+      <circle
+        cx={0}
+        cy={0}
+        r={8}
+        fill="#ef4444"
+        opacity={0.85}
+        stroke="#991b1b"
+        strokeWidth={3}
+      >
+        <animate attributeName="r" values="6;12;6" dur="2s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.9;0.4;0.9" dur="2s" repeatCount="indefinite" />
+      </circle>
+      {/* Optional: show username on hover */}
+      <text
+        textAnchor="middle"
+        y={-15}
+        style={{ fontFamily: "system-ui", fill: "#fff", fontSize: "10px" }}
+      >
+        {a.username}
+      </text>
+    </Marker>
                 ))}
             </ComposableMap>
           </div>
