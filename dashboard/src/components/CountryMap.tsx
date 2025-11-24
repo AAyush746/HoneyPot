@@ -56,7 +56,7 @@ export default function CountryMap({ attacks }: { attacks: Attack[] }) {
           validAttacks.map((attack, i) => (
             <Marker
               key={attack.id || i}
-              coordinates={[attack.longitude!, attack.latitude!]}
+              coordinates={[Number(attack.longitude), Number(attack.latitude)]}
             >
               <circle
                 cx={0}

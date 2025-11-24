@@ -29,5 +29,5 @@ class Attack(Base):
     longitude = Column(Float, nullable=True)   # ← NEW
 
 # Create the table with new schema
-Base.metadata.create_all(bind=engine)
-print("Database created successfully with latitude/longitude!")
+# Base.metadata.create_all(bind=engine)
+# print("Database created successfully with latitude/longitude!")
