@@ -1,200 +1,102 @@
-// dashboard/src/App.tsx  ← REPLACE ENTIRE FILE WITH THIS
-import { useEffect, useState } from "react";
-import axios from "axios";
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  Marker,
-} from "react-simple-maps";
-import { format } from "date-fns";
+// dashboard/src/app.tsx
+import { useEffect, useState } from "react"
+import AttackTable from "./components/AttackTable"
+import CountryMap from "./components/CountryMap"
+import StatsCards from "./components/StatsCards"
+import AttackTimeline from "./components/AttackTimeline"
+import TopCredentials from "./components/TopCredentials"
+import type { Attack } from "./types/Attack"
 
-interface Attack {
-  id: number;
-  timestamp: string;
-  src_ip: string;
-  username: string;
-  password: string;
-  country: string;
-  country_code: string;
-  city: string;
-  latitude: number;
-  longitude: number;
+interface Stats {
+  total_attacks: number
+  today_attacks: number
+  unique_ips: number
+  top_countries: { name: string; count: number }[]
+  avg_flow_duration: number
+  max_flow_rate: number
+  avg_packet_size: number
+  most_common_username: string
 }
 
-const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+export default function App() {
+  const [attacks, setAttacks] = useState<Attack[]>([])
+  const [stats, setStats] = useState<Stats | null>(null)
 
-function App() {
-  const [attacks, setAttacks] = useState<Attack[]>([]);
-  const [stats, setStats] = useState<any>({});
+  const defaultStats: Stats = {
+    total_attacks: 0,
+    today_attacks: 0,
+    unique_ips: 0,
+    top_countries: [],
+    avg_flow_duration: 0,
+    max_flow_rate: 0,
+    avg_packet_size: 0,
+    most_common_username: ""
+  }
+const fetchData = async () => {
+  try {
+    const [attacksRes, statsRes] = await Promise.all([
+      fetch("http://localhost:8000/api/attacks"),
+      fetch("http://localhost:8000/api/stats")
+    ])
 
-  const fetchData = async () => {
-    try {
-      const [a, s] = await Promise.all([
-        axios.get("http://localhost:8000/attacks"),
-        axios.get("http://localhost:8000/stats"),
-      ]);
-      setAttacks(a.data);
-      setStats(s.data);
-    } catch (e) {
-      console.log("waiting...");
+    if (!attacksRes.ok || !statsRes.ok) {
+      console.error("API responded with error:", attacksRes.status, statsRes.status)
+      return
     }
-  };
 
-  useEffect(() => {
-    fetchData();
-    const i = setInterval(fetchData, 4000);
-    return () => clearInterval(i);
-  }, []);
+    const attacksData = await attacksRes.json()
+    const statsData = await statsRes.json()
+
+    console.log(`Fetched ${attacksData.length} attacks`)  // You will see this in console
+    setAttacks(attacksData)
+    setStats(statsData)
+  } catch (err) {
+    console.error("Fetch failed completely:", err)
+  }
+}
+
+useEffect(() => {
+  fetchData()  // Initial load
+  const interval = setInterval(() => {
+    fetchData()
+  }, 3000)  // Every 3 seconds — fast enough for demo
+
+  return () => clearInterval(interval)
+}, [])
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <h1 className="text-6xl font-bold text-center mb-10 text-red-500">
-        LIVE HONEYPOT ATTACKS
-      </h1>
-
-      {/* STATS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto mb-12">
-        <div className="bg-red-900/40 border border-red-800 rounded-xl p-8 text-center">
-          <div className="text-5xl font-bold">{stats.today_attacks || 0}</div>
-          <div className="text-gray-400 mt-2">Today</div>
+    <div className="max-w-7xl mx-auto space-y-8">
+      <header>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">SSH Honeypot Dashboard</h1>
+          <p className="text-center text-gray-400 mt-4 text-lg">
+            Real-time brute-force attack monitoring with flow analysis
+          </p>
         </div>
-        <div className="bg-orange-900/40 border border-orange-800 rounded-xl p-8 text-center">
-          <div className="text-5xl font-bold">{stats.total_attacks || 0}</div>
-          <div className="text-gray-400 mt-2">Total</div>
-        </div>
-        <div className="bg-yellow-900/40 border border-yellow-800 rounded-xl p-8 text-center">
-          <div className="text-5xl font-bold">{stats.unique_ips || 0}</div>
-          <div className="text-gray-400 mt-2">Unique IPs</div>
-        </div>
-        <div className="bg-purple-900/40 border border-purple-800 rounded-xl p-8 text-center">
-          <div className="text-5xl font-bold">
-            {stats.top_countries?.[0]?.count || 0}
-          </div>
-          <div className="text-gray-400 mt-2">
-            Top: {stats.top_countries?.[0]?.name || "—"}
-          </div>
-        </div>
-      </div>
+      </header>
 
-      {/* MAIN GRID */}
-      <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
-        {/* MAP — SHOWS ALL ATTACKS INCLUDING LOCALHOST */}
-        <div className="bg-gray-800 rounded-2xl p-6 shadow-2xl">
-          <h2 className="text-3xl font-bold mb-4">Attack Origins</h2>
-          <div className="h-96 rounded-xl overflow-hidden border border-gray-700">
-            <ComposableMap projectionConfig={{ scale: 140 }}>
-              <Geographies geography={geoUrl}>
-                {({ geographies }) =>
-                  geographies.map((geo) => (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill="#1a1a2e"
-                      stroke="#16213e"
-                    />
-                  ))
-                }
-              </Geographies>
+      <div className="max-w-7xl mx-auto space-y-8">
+        <StatsCards stats={stats || defaultStats} />
 
-              {/* THIS SHOWS ALL ATTACKS — INCLUDING YOUR FRIEND AND LOCALHOST */}
-              {attacks
-                .filter((a) => a.latitude !== null && a.longitude !== null)
-                .map((a, i) => (
-                  <Marker
-                    key={`${a.id}-${i}`}
-                    coordinates={[a.longitude, a.latitude]}
-                  >
-                    <circle
-                      cx={0}
-                      cy={0}
-                      r={8}
-                      fill="#ef4444"
-                      opacity={0.9}
-                      stroke="#991b1b"
-                      strokeWidth={3}
-                    >
-                      <animate
-                        attributeName="r"
-                        values="6;14;6"
-                        dur="2s"
-                        repeatCount="indefinite"
-                      />
-                      <animate
-                        attributeName="opacity"
-                        values="1;0.4;1"
-                        dur="2s"
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-                    <text
-                      textAnchor="middle"
-                      y={-15}
-                      style={{
-                        fontFamily: "system-ui",
-                        fill: "#fff",
-                        fontSize: "11px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {a.username}
-                    </text>
-                  </Marker>
-                ))}
-
-              {attacks.length === 0 && (
-                <text
-                  x="50%"
-                  y="50%"
-                  textAnchor="middle"
-                  fill="#666"
-                  className="text-2xl"
-                >
-                  Waiting for attacks...
-                </text>
-              )}
-            </ComposableMap>
-          </div>
+        <div className="grid md:grid-cols-2 gap-8">
+          <AttackTimeline attacks={attacks} />
+          <CountryMap attacks={attacks} />
         </div>
 
-        {/* TABLE */}
-        <div className="bg-gray-800 rounded-2xl p-6 shadow-2xl">
-          <h2 className="text-3xl font-bold mb-4">Latest Attacks</h2>
-          <div className="max-h-96 overflow-y-auto">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-gray-800 border-b border-gray-700">
-                <tr>
-                  <th className="text-left p-3">Time</th>
-                  <th className="text-left p-3">IP</th>
-                  <th className="text-left p-3">Location</th>
-                  <th className="text-left p-3">Credentials</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attacks.slice(0, 25).map((a) => (
-                  <tr
-                    key={a.id}
-                    className="border-b border-gray-800 hover:bg-gray-700 transition"
-                  >
-                    <td className="p-3">
-                      {format(new Date(a.timestamp), "HH:mm:ss")}
-                    </td>
-                    <td className="p-3 font-mono text-cyan-400">{a.src_ip}</td>
-                    <td className="p-3">
-                      {a.country} • {a.city}
-                    </td>
-                    <td className="p-3 font-mono text-red-400">
-                      {a.username}:{a.password}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <TopCredentials attacks={attacks} />
+
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Recent Attacks</h2>
+          <a
+            href="/api/export-csv"
+            className="bg-green-800 hover:bg-green-700 px-6 py-3 rounded-lg font-medium transition"
+          >
+            Export to CSV
+          </a>
         </div>
+
+        <AttackTable attacks={attacks.slice(0, 50)} />
       </div>
     </div>
-  );
+  )
 }
-
-export default App;
